@@ -7,3 +7,94 @@
 @media(max-width:430px){.sidebar{width:53px;padding:19px 7px}.main-content{margin-left:53px}.topbar{height:52px;padding:0 13px}.page-wrap{padding:23px 12px 12px}.welcome-row h1{font-size:20px;letter-spacing:-.8px}.welcome-row{margin-bottom:18px}.eyebrow{font-size:8px}.stats-grid{gap:7px}.stat-card{padding:12px 10px}.stat-top{font-size:9px}.stat-value{font-size:22px}.panel-heading h2{font-size:13px}.filter-tabs{gap:12px}.page-footer span:first-child{display:none}.modal{padding:19px}}
 
 .api-error{margin:0 18px 12px;padding:9px 11px;border:1px solid #f0d9d9;border-radius:5px;background:#fcf3f3;color:#9b4f4f;font-size:10px;line-height:1.5}.status-select{border:0;outline-offset:2px;cursor:pointer;font-family:inherit}.row-actions{display:flex;align-items:center;gap:2px}.row-action{width:22px;height:25px;padding:0;display:grid;place-items:center;border-radius:4px;letter-spacing:0;font-size:14px}.row-action:hover{background:#f1f4f0;color:#456b4c}.remove-action:hover{background:#fbefef;color:#ad5656}.empty-add-button{margin-top:12px;border:0;background:#eef4ee;border-radius:5px;color:#456b4c;padding:8px 12px;font-size:10px;font-weight:600}.empty-add-button:hover{background:#e3eee3}th:last-child,td:last-child{width:68px}
+
+/* Wine and burgundy theme */
+:root{color:#34212a;background:#f7eef1}
+body{background:#f7eef1}
+.sidebar{background:linear-gradient(180deg,#471d31 0%,#351525 100%);border-right-color:#592b40;color:#fff}
+.brand{color:#fff}
+.brand-mark{background:linear-gradient(140deg,#d9a2b3,#a85470);color:#421c2c;box-shadow:0 3px 12px #1c0d1438}
+.brand-light{color:#d7b4c0}
+.workspace-label{color:#c5a4b0}
+.nav-link{color:#e0c5ce}
+.nav-link.selected{background:#ffffff18;color:#fff;box-shadow:inset 2px 0 #e3a8ba}
+.nav-count{background:#ffffff12;border-color:#ffffff26;color:#f0dce2}
+.tip-card{background:#ffffff0d;border-color:#ffffff20}
+.tip-card strong{color:#fff3f6}
+.tip-card p{color:#d3b5bf}
+.tip-spark{color:#e0a9ba}
+.profile{border-top-color:#ffffff25}
+.profile strong{color:#fff}
+.profile div:nth-child(2) span,.profile-dots{color:#d3b5bf}
+.avatar,.top-avatar{background:#f1dce3;color:#632c43}
+.main-content{background:linear-gradient(140deg,#faf5f6 0%,#f5ebef 100%)}
+.topbar{background:#fffdfd;border-bottom-color:#eadde2}
+.breadcrumbs{color:#9a818b}
+.breadcrumbs strong{color:#4f2a39}
+.today-label{color:#9b828d}
+.eyebrow{color:#8d415d}
+.eyebrow-dot{background:#b84d70;box-shadow:0 0 0 3px #b84d7018}
+.welcome-row h1{color:#442333}
+.wave{color:#b65f79}
+.welcome-copy{color:#8f7882}
+.primary-button{background:linear-gradient(135deg,#702a46 0%,#a74667 100%);box-shadow:0 5px 13px #702a4630, inset 0 1px #ffffff35}
+.primary-button:hover{background:linear-gradient(135deg,#5d2039 0%,#913653 100%);box-shadow:0 7px 17px #702a4640}
+.stat-card{border-color:#ecdee3;box-shadow:0 3px 12px #57293a08}
+.total-card{border-color:#ddc0cb;background:linear-gradient(140deg,#fff 40%,#fcf3f6)}
+.stat-top{color:#826b75}
+.total-icon{color:#823b56;background:#f7e9ee}
+.progress-icon{color:#a36948;background:#f8eee8}
+.interview-icon{color:#8c5270;background:#f5eaf0}
+.offer-icon{color:#8e623d;background:#f8f1e8}
+.stat-foot{color:#9a8790}
+.trend-up{color:#a74566}
+.applications-panel{border-color:#eadde2;box-shadow:0 5px 20px #57293a08}
+.panel-heading h2{color:#452536}
+.panel-heading p{color:#937d86}
+.toolbar{border-top-color:#f2e8ec;border-bottom-color:#eddee4}
+.filter-tab{color:#967f89}
+.filter-tab.active{color:#7b2f4c;border-bottom-color:#a34362}
+.filter-total{background:#f5e8ed;color:#813b54}
+.search-box{border-color:#eaddE2;color:#a07385;background:#fffdfd}
+.search-box:focus-within{border-color:#b15b77;box-shadow:0 0 0 3px #b15b7718}
+.search-box input{background:transparent;color:#4f3540}
+.search-box input::placeholder{color:#ad9ba2}
+thead{background:#fbf6f8}
+th{color:#a48d97}
+td{border-top-color:#f1e7eb;color:#71606a}
+.company-cell{color:#4c303c}
+.company-logo.green{color:#823b56;background:#f7e8ed}
+.role-cell{color:#66515c}
+.location-cell,.date-cell{color:#927e87}
+.status-pill.applied{background:#f0edf7;color:#786293}
+.status-pill.interview{background:#f8e9ee;color:#9a3d60}
+.status-pill.saved{background:#f1edf0;color:#85737c}
+.status-pill.offer{background:#f6eee4;color:#987046}
+.status-pill.rejected{background:#f9e9e9;color:#ab5b61}
+.row-action{color:#9a7f8b}
+.row-action:hover{background:#f8eaf0;color:#7e304d}
+.remove-action:hover{background:#fbecee;color:#aa4b58}
+.panel-footer{border-top-color:#f0e5e9;color:#9b8790}
+.panel-footer strong{color:#644b57}
+.footer-dot{background:#b25470}
+.empty-state{color:#9c8791}
+.empty-state strong{color:#573344}
+.empty-add-button{background:#f5e6eb;color:#823b56}
+.empty-add-button:hover{background:#efd8e1}
+.page-footer{color:#a48e98}
+.footer-version{color:#c7b4bc}
+.modal-backdrop{background:#321523a8}
+.modal{border:1px solid #eadde2;box-shadow:0 24px 70px #32152345}
+.modal-kicker{color:#92445e}
+.modal-heading h2{color:#482839}
+.modal-heading p{color:#937d87}
+.close-button{background:#f8eef1;color:#80425a}
+.modal form label{color:#604754}
+.modal input,.modal select{border-color:#e7d9df;color:#4d3541}
+.modal input:focus,.modal select:focus{border-color:#aa5c76;box-shadow:0 0 0 3px #aa5c7618}
+.modal input::placeholder{color:#b5a5ac}
+.optional{color:#ab969f}
+.form-error{color:#963d50;background:#fbebee}
+.secondary-button{border-color:#e6d9df;color:#755d68}
+.secondary-button:hover{background:#fbf4f6}
+.api-error{border-color:#efcbd4;background:#fff2f5;color:#8e394e}
