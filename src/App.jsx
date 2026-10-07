@@ -25,7 +25,65 @@ function todayAsLocalDate() {
   return `${today.getFullYear()}-${month}-${day}`
 }
 
+function AuthScreen({ onAuthenticated, message }) {
+  const [mode, setMode] = useState('login')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState(message || '')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  async function submit(event) {
+    event.preventDefault()
+    setError('')
+    setIsSubmitting(true)
+    try {
+      const response = await fetch(`${API_URL}/auth/${mode === 'signup' ? 'signup' : 'login'}`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      })
+      if (!response.ok) throw new Error(await getErrorMessage(response))
+      const data = await response.json()
+      onAuthenticated(data.user)
+    } catch (requestError) {
+      setError(requestError.message || 'Could not connect. Check that the API server is running.')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  function changeMode(nextMode) {
+    setMode(nextMode)
+    setError('')
+  }
+
+  return (
+    <main className="auth-page">
+      <section className="auth-card" aria-labelledby="auth-title">
+        <a className="auth-brand" href="#login" aria-label="FIbsaac Job Tracker">
+          <span className="brand-mark">F</span><span>FIbsaac<span className="brand-light">/track</span></span>
+        </a>
+        <span className="auth-kicker">YOUR JOB SEARCH, IN ONE PLACE</span>
+        <h1 id="auth-title">{mode === 'signup' ? 'Create your account' : 'Welcome back'}</h1>
+        <p className="auth-intro">{mode === 'signup' ? 'Sign up to save and organize your applications.' : 'Sign in to continue tracking your opportunities.'}</p>
+        <form className="auth-form" onSubmit={submit}>
+          <label>Email address<input type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" required maxLength={254} /></label>
+          <label>Password<input type="password" autoComplete={mode === 'signup' ? 'new-password' : 'current-password'} value={password} onChange={(event) => setPassword(event.target.value)} placeholder={mode === 'signup' ? 'At least 12 characters' : 'Your password'} required minLength={mode === 'signup' ? 12 : 1} maxLength={128} /></label>
+          {error && <p className="auth-error" role="alert">{error}</p>}
+          <button className="primary-button auth-submit" type="submit" disabled={isSubmitting}>{isSubmitting ? 'Please wait…' : mode === 'signup' ? 'Create account' : 'Sign in'}</button>
+        </form>
+        <p className="auth-switch">{mode === 'signup' ? 'Already have an account?' : 'New to FIbsaac/track?'} <button type="button" onClick={() => changeMode(mode === 'signup' ? 'login' : 'signup')}>{mode === 'signup' ? 'Sign in' : 'Create an account'}</button></p>
+        <p className="auth-private-note">Your applications are private to your account.</p>
+      </section>
+    </main>
+  )
+}
+
 function App() {
+  const [user, setUser] = useState(null)
+  const [isCheckingSession, setIsCheckingSession] = useState(true)
+  const [authMessage, setAuthMessage] = useState('')
   const [applications, setApplications] = useState([])
   const [activeFilter, setActiveFilter] = useState('All applications')
   const [search, setSearch] = useState('')
@@ -36,13 +94,51 @@ function App() {
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [form, setForm] = useState({ company: '', role: '', location: '', date: todayAsLocalDate(), status: 'Applied' })
+  const displayName = user?.email.split('@')[0] || ''
+  const userInitial = displayName.slice(0, 1).toUpperCase()
+
+  const visibleApplications = useMemo(() => applications.filter((application) => {
+    const matchesFilter = activeFilter === 'All applications' || application.status === activeFilter
+    const query = search.trim().toLowerCase()
+    const matchesSearch = !query || `${application.company} ${application.role} ${application.location}`.toLowerCase().includes(query)
+    return matchesFilter && matchesSearch
+  }), [activeFilter, applications, search])
 
   useEffect(() => {
     let isCurrent = true
 
-    async function loadApplications() {
+    async function loadSession() {
       try {
-        const response = await fetch(`${API_URL}/applications`)
+        const response = await fetch(`${API_URL}/auth/session`, { credentials: 'include' })
+        if (response.ok) {
+          const data = await response.json()
+          if (isCurrent) setUser(data.user)
+        } else if (response.status !== 401) {
+          throw new Error(await getErrorMessage(response))
+        }
+      } catch {
+        if (isCurrent) setAuthMessage('Could not connect to the server. Start the API, then try again.')
+      } finally {
+        if (isCurrent) setIsCheckingSession(false)
+      }
+    }
+
+    loadSession()
+    return () => { isCurrent = false }
+  }, [])
+
+  useEffect(() => {
+    if (!user) return undefined
+    let isCurrent = true
+    async function loadApplications() {
+      setIsLoading(true)
+      try {
+        const response = await fetch(`${API_URL}/applications`, { credentials: 'include' })
+        if (response.status === 401) {
+          setUser(null)
+          setAuthMessage('Your session has ended. Sign in to continue.')
+          return
+        }
         if (!response.ok) throw new Error(await getErrorMessage(response))
         const data = await response.json()
         if (isCurrent) setApplications(data)
@@ -55,14 +151,27 @@ function App() {
 
     loadApplications()
     return () => { isCurrent = false }
-  }, [])
+  }, [user])
 
-  const visibleApplications = useMemo(() => applications.filter((application) => {
-    const matchesFilter = activeFilter === 'All applications' || application.status === activeFilter
-    const query = search.trim().toLowerCase()
-    const matchesSearch = !query || `${application.company} ${application.role} ${application.location}`.toLowerCase().includes(query)
-    return matchesFilter && matchesSearch
-  }), [activeFilter, applications, search])
+  async function signOut() {
+    try {
+      const response = await fetch(`${API_URL}/auth/logout`, { method: 'POST', credentials: 'include' })
+      if (!response.ok) throw new Error(await getErrorMessage(response))
+      setApplications([])
+      setIsLoading(false)
+      setUser(null)
+      setAuthMessage('')
+    } catch (error) {
+      setApiError(error.message || 'Could not sign out. Check that the API server is running.')
+    }
+  }
+
+  if (isCheckingSession) {
+    return <main className="auth-page"><div className="auth-loading">Opening your workspace…</div></main>
+  }
+  if (!user) {
+    return <AuthScreen onAuthenticated={(signedInUser) => { setAuthMessage(''); setApplications([]); setIsLoading(true); setUser(signedInUser) }} message={authMessage} />
+  }
 
   const countFor = (status) => applications.filter((application) => application.status === status).length
 
@@ -97,6 +206,7 @@ function App() {
       const isEditing = editingId !== null
       const response = await fetch(`${API_URL}/applications${isEditing ? `/${editingId}` : ''}`, {
         method: isEditing ? 'PATCH' : 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...form, company: form.company.trim(), role: form.role.trim(), location: form.location.trim() }),
       })
@@ -122,6 +232,7 @@ function App() {
     try {
       const response = await fetch(`${API_URL}/applications/${id}`, {
         method: 'PATCH',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),
       })
@@ -138,7 +249,7 @@ function App() {
     const application = applications.find((item) => item.id === id)
     if (!application || !window.confirm(`Delete the application for ${application.company}? This cannot be undone.`)) return
     try {
-      const response = await fetch(`${API_URL}/applications/${id}`, { method: 'DELETE' })
+      const response = await fetch(`${API_URL}/applications/${id}`, { method: 'DELETE', credentials: 'include' })
       if (!response.ok) throw new Error(await getErrorMessage(response))
       setApplications((current) => current.filter((application) => application.id !== id))
       setApiError('')
@@ -161,15 +272,15 @@ function App() {
         </nav>
         <div className="sidebar-bottom">
           <div className="tip-card"><span className="tip-spark">✳</span><strong>One step at a time</strong><p>Your applications, all in one place.</p></div>
-          <div className="profile"><div className="avatar">F</div><div><strong>FIbsaac</strong><span>Personal workspace</span></div></div>
+          <div className="profile"><div className="avatar">{userInitial}</div><div className="profile-copy"><strong>{displayName}</strong><span>{user.email}</span></div><button className="signout-button" type="button" onClick={signOut}>Sign out</button></div>
         </div>
       </aside>
 
       <main className="main-content" id="overview">
-        <header className="topbar"><div className="breadcrumbs">Workspace <span>/</span> <strong>Overview</strong></div><div className="topbar-right"><span className="today-label">{new Intl.DateTimeFormat('en', { weekday: 'long', month: 'long', day: 'numeric' }).format(new Date())}</span><div className="top-avatar">F</div></div></header>
+        <header className="topbar"><div className="breadcrumbs">Workspace <span>/</span> <strong>Overview</strong></div><div className="topbar-right"><span className="today-label">{new Intl.DateTimeFormat('en', { weekday: 'long', month: 'long', day: 'numeric' }).format(new Date())}</span><div className="top-avatar" aria-label={user.email}>{userInitial}</div><button className="top-signout-button" type="button" onClick={signOut}>Sign out</button></div></header>
         <div className="page-wrap">
           <section className="welcome-row">
-            <div><div className="eyebrow"><span className="eyebrow-dot" /> YOUR JOB SEARCH</div><h1>Welcome back, FIbsaac</h1><p className="welcome-copy">Here’s where things stand with your applications.</p></div>
+            <div><div className="eyebrow"><span className="eyebrow-dot" /> YOUR JOB SEARCH</div><h1>Welcome back, {displayName}</h1><p className="welcome-copy">Here’s where things stand with your applications.</p></div>
             <button className="primary-button" onClick={openNewForm}><span className="plus">+</span> Add application</button>
           </section>
 
