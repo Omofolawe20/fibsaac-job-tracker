@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: fibsaac-job-tracker
+    runtime: node
+    plan: starter
+    buildCommand: npm ci && npm --prefix server ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    disk:
+      name: job-tracker-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: HOST
+        value: 0.0.0.0
+      - key: DATA_DIRECTORY
+        value: /var/data
+      - key: FRONTEND_ORIGIN
+        sync: false
+      - key: ADMIN_SETUP_TOKEN
+        sync: false

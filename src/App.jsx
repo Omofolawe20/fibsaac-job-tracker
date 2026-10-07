@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import './App.css'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
+const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3001/api' : '/api')
 const filters = ['All applications', 'Applied', 'Interview', 'Saved', 'Offer', 'Rejected']
 
 async function getErrorMessage(response) {
@@ -27,6 +27,8 @@ function todayAsLocalDate() {
 
 function AuthScreen({ onAuthenticated, message }) {
   const [mode, setMode] = useState('login')
+  const [isOwnerSetup, setIsOwnerSetup] = useState(false)
+  const [ownerSetupCode, setOwnerSetupCode] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState(message || '')
@@ -41,7 +43,7 @@ function AuthScreen({ onAuthenticated, message }) {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, ownerSetupCode: isOwnerSetup ? ownerSetupCode : '' }),
       })
       if (!response.ok) throw new Error(await getErrorMessage(response))
       const data = await response.json()
@@ -55,6 +57,8 @@ function AuthScreen({ onAuthenticated, message }) {
 
   function changeMode(nextMode) {
     setMode(nextMode)
+    setIsOwnerSetup(false)
+    setOwnerSetupCode('')
     setError('')
   }
 
@@ -65,18 +69,75 @@ function AuthScreen({ onAuthenticated, message }) {
           <span className="brand-mark">F</span><span className="auth-brand-name">FIbsaac</span>
         </a>
         <span className="auth-kicker">YOUR JOB SEARCH, IN ONE PLACE</span>
-        <h1 id="auth-title">{mode === 'signup' ? 'Create your account' : <>Welcome back, <span className="auth-highlight">FIbsaac</span></>}</h1>
-        <p className="auth-intro">{mode === 'signup' ? 'Sign up to save and organize your applications.' : 'Sign in to continue tracking your opportunities.'}</p>
+        <h1 id="auth-title">{mode === 'signup' ? 'Create your account' : 'Welcome back'}</h1>
+        <p className="auth-intro">{mode === 'signup' ? 'Your applications stay separated by account. The app owner can review submitted records.' : 'Sign in to continue tracking your opportunities.'}</p>
         <form className="auth-form" onSubmit={submit}>
           <label>Email address<input type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" required maxLength={254} /></label>
           <label>Password<input type="password" autoComplete={mode === 'signup' ? 'new-password' : 'current-password'} value={password} onChange={(event) => setPassword(event.target.value)} placeholder={mode === 'signup' ? 'At least 12 characters' : 'Your password'} required minLength={mode === 'signup' ? 12 : 1} maxLength={128} /></label>
+          {mode === 'signup' && <label className="owner-setup-toggle"><input type="checkbox" checked={isOwnerSetup} onChange={(event) => { setIsOwnerSetup(event.target.checked); setError('') }} /> I’m setting up the app owner account</label>}
+          {mode === 'signup' && isOwnerSetup && <label>One-time owner setup code<input type="password" autoComplete="off" value={ownerSetupCode} onChange={(event) => setOwnerSetupCode(event.target.value)} placeholder="Enter the code configured on the server" required /></label>}
           {error && <p className="auth-error" role="alert">{error}</p>}
           <button className="primary-button auth-submit" type="submit" disabled={isSubmitting}>{isSubmitting ? 'Please wait…' : mode === 'signup' ? 'Create account' : 'Sign in'}</button>
         </form>
         <p className="auth-switch">{mode === 'signup' ? 'Already have an account?' : 'New to FIbsaac/track?'} <button type="button" onClick={() => changeMode(mode === 'signup' ? 'login' : 'signup')}>{mode === 'signup' ? 'Sign in' : 'Create an account'}</button></p>
-        <p className="auth-private-note">Your applications are private to your account.</p>
+        <p className="auth-private-note">Member job details are visible to the app owner.</p>
       </section>
     </main>
+  )
+}
+
+function AdminDashboard() {
+  const [report, setReport] = useState(null)
+  const [error, setError] = useState('')
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    let isCurrent = true
+    async function loadReport() {
+      try {
+        const response = await fetch(`${API_URL}/admin/overview`, { credentials: 'include' })
+        if (!response.ok) throw new Error(await getErrorMessage(response))
+        const data = await response.json()
+        if (isCurrent) setReport(data)
+      } catch (requestError) {
+        if (isCurrent) setError(requestError.message || 'Could not load the admin report.')
+      } finally {
+        if (isCurrent) setIsLoading(false)
+      }
+    }
+    loadReport()
+    return () => { isCurrent = false }
+  }, [])
+
+  return (
+    <div className="admin-page">
+      <section className="admin-welcome">
+        <div><div className="eyebrow"><span className="eyebrow-dot" /> OWNER WORKSPACE</div><h1>Community dashboard</h1><p>Accounts and job applications shared with you as the app owner.</p></div>
+      </section>
+      {error && <div className="api-error" role="alert">{error}</div>}
+      <section className="stats-grid admin-stats" aria-label="Community totals">
+        <article className="stat-card total-card"><div className="stat-top"><span>Accounts</span><span className="stat-icon total-icon">♙</span></div><div className="stat-value">{report?.users.length ?? '—'}</div><div className="stat-foot">Registered members</div></article>
+        <article className="stat-card"><div className="stat-top"><span>Applications</span><span className="stat-icon interview-icon">▤</span></div><div className="stat-value">{report?.totalApplications ?? '—'}</div><div className="stat-foot">Shared by members</div></article>
+      </section>
+      {isLoading && <div className="admin-loading">Loading account and application details…</div>}
+      {report && <>
+        <section className="admin-panel">
+          <div className="admin-panel-heading"><div><h2>Accounts</h2><p>People who have created an account.</p></div><span>{report.users.length} accounts</span></div>
+          <div className="table-scroll"><table className="admin-table"><thead><tr><th>EMAIL</th><th>ROLE</th><th>APPLICATIONS</th><th>JOINED</th></tr></thead><tbody>
+            {report.users.map((member) => <tr key={member.id}><td className="role-cell">{member.email}</td><td>{member.role === 'admin' ? <span className="admin-role">App owner</span> : <span className="member-role">Member</span>}</td><td>{member.applicationCount}</td><td className="date-cell">{new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(`${member.createdAt.slice(0, 10)}T12:00:00`))}</td></tr>)}
+            {report.users.length === 0 && <tr><td colSpan="4">No accounts yet.</td></tr>}
+          </tbody></table></div>
+        </section>
+        <section className="admin-panel">
+          <div className="admin-panel-heading"><div><h2>Applications from members</h2><p>Member-submitted records are visible to the app owner.</p></div><span>Latest {report.applications.length}</span></div>
+          <div className="table-scroll"><table className="admin-table"><thead><tr><th>ACCOUNT</th><th>COMPANY</th><th>ROLE</th><th>DATE</th><th>STATUS</th></tr></thead><tbody>
+            {report.applications.map((application) => <tr key={application.id}><td className="role-cell">{application.userEmail}</td><td className="role-cell">{application.company}</td><td>{application.role}</td><td className="date-cell">{formatDate(application.date)}</td><td><span className={`status-pill ${application.status.toLowerCase()}`}>{application.status}</span></td></tr>)}
+            {report.applications.length === 0 && <tr><td colSpan="5">No applications have been submitted yet.</td></tr>}
+          </tbody></table></div>
+        </section>
+        <p className="admin-privacy-note">This view includes member-submitted job details. Use it only for the testing and management purpose explained on sign-up.</p>
+      </>}
+    </div>
   )
 }
 
@@ -93,6 +154,7 @@ function App() {
   const [apiError, setApiError] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
+  const [currentPage, setCurrentPage] = useState('overview')
   const [form, setForm] = useState({ company: '', role: '', location: '', date: todayAsLocalDate(), status: 'Applied' })
   const displayName = user?.email.split('@')[0] || ''
   const userInitial = displayName.slice(0, 1).toUpperCase()
@@ -267,8 +329,9 @@ function App() {
         </a>
         <div className="workspace-label">WORKSPACE</div>
         <nav className="main-nav" aria-label="Main navigation">
-          <a className="nav-link selected" href="#overview"><span className="nav-icon">▦</span> Overview</a>
-          <a className="nav-link" href="#applications"><span className="nav-icon">▤</span> Applications <span className="nav-count">{applications.length}</span></a>
+          <button className={`nav-link nav-button ${currentPage === 'overview' ? 'selected' : ''}`} onClick={() => setCurrentPage('overview')}><span className="nav-icon">▦</span> Overview</button>
+          <a className="nav-link" href="#applications" onClick={() => setCurrentPage('overview')}><span className="nav-icon">▤</span> Applications <span className="nav-count">{applications.length}</span></a>
+          {user.role === 'admin' && <button className={`nav-link nav-button ${currentPage === 'admin' ? 'selected' : ''}`} onClick={() => setCurrentPage('admin')}><span className="nav-icon">◫</span> Admin dashboard</button>}
         </nav>
         <div className="sidebar-bottom">
           <div className="tip-card"><span className="tip-spark">✳</span><strong>One step at a time</strong><p>Your applications, all in one place.</p></div>
@@ -277,8 +340,9 @@ function App() {
       </aside>
 
       <main className="main-content" id="overview">
-        <header className="topbar"><div className="breadcrumbs">Workspace <span>/</span> <strong>Overview</strong></div><div className="topbar-right"><span className="today-label">{new Intl.DateTimeFormat('en', { weekday: 'long', month: 'long', day: 'numeric' }).format(new Date())}</span><div className="top-avatar" aria-label={user.email}>{userInitial}</div><button className="top-signout-button" type="button" onClick={signOut}>Sign out</button></div></header>
+        <header className="topbar"><div className="breadcrumbs">Workspace <span>/</span> <strong>{currentPage === 'admin' ? 'Admin dashboard' : 'Overview'}</strong></div><div className="topbar-right"><span className="today-label">{new Intl.DateTimeFormat('en', { weekday: 'long', month: 'long', day: 'numeric' }).format(new Date())}</span><div className="top-avatar" aria-label={user.email}>{userInitial}</div><button className="top-signout-button" type="button" onClick={signOut}>Sign out</button></div></header>
         <div className="page-wrap">
+          {currentPage === 'admin' && user.role === 'admin' ? <AdminDashboard /> : <>
           <section className="welcome-row">
             <div><div className="eyebrow"><span className="eyebrow-dot" /> YOUR JOB SEARCH</div><h1>Welcome back, {displayName}</h1><p className="welcome-copy">Here’s where things stand with your applications.</p></div>
             <button className="primary-button" onClick={openNewForm}><span className="plus">+</span> Add application</button>
@@ -302,6 +366,7 @@ function App() {
             <div className="panel-footer"><span>Showing <strong>{visibleApplications.length}</strong> of <strong>{applications.length}</strong> applications</span><span className="footer-note"><span className="footer-dot" /> Up to date</span></div>
           </section>
           <footer className="page-footer"><span>A little progress counts.</span><span>FIbsaac’s Job Tracker <span className="footer-version">• 2026</span></span></footer>
+          </>}
         </div>
       </main>
 

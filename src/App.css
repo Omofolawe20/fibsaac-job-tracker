@@ -239,7 +239,7 @@ td { height: 62px; padding: 0 14px; font-size: 12px; }
 .auth-highlight { color: #9c3f5e; }
 .auth-intro { margin: 0; color: #8d7781; font-size: 13px; line-height: 1.6; }
 .auth-form { display: grid; gap: 17px; margin-top: 27px; }
-.auth-form label { display: grid; gap: 8px; color: #604754; font-size: 12px; font-weight: 600; }
+.auth-form label { display: grid; gap: 8px; color: #604754; font-size: 12px; font-weight: 600; text-align: left; }
 .auth-form input { width: 100%; height: 44px; padding: 0 12px; border: 1px solid #e7d9df; border-radius: 8px; outline: 0; background: #fff; color: #4d3541; font: 13px 'DM Sans', sans-serif; transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease; }
 .auth-form input:hover { transform: translateY(-1px); border-color: #c99baa; box-shadow: 0 5px 12px #57293a0d; }
 .auth-form input:focus { transform: translateY(-1px); border-color: #aa5c76; box-shadow: 0 0 0 3px #aa5c7618, 0 5px 12px #57293a0d; }
@@ -255,10 +255,32 @@ td { height: 62px; padding: 0 14px; font-size: 12px; }
 .signout-button:hover { background: #ffffff24; }
 .signout-button:focus-visible, .auth-switch button:focus-visible { outline: 3px solid #c77b95; outline-offset: 2px; }
 .top-signout-button { display: none; padding: 7px 10px; border: 1px solid #eadde2; border-radius: 7px; background: #fffdfd; color: #72314b; font-size: 11px; font-weight: 600; }
+.auth-form .owner-setup-toggle { display: flex; align-items: center; gap: 9px; color: #806a75; font-weight: 500; }
+.auth-form .owner-setup-toggle input { width: 16px; height: 16px; margin: 0; accent-color: #8b3553; }
+.auth-form .owner-setup-toggle input:hover { transform: none; box-shadow: none; }
+.nav-button { width: 100%; border: 0; text-align: left; background: transparent; }
+.admin-page { display: grid; gap: 20px; }
+.admin-welcome h1 { margin: 11px 0 6px; color: #442333; font: 700 29px Manrope, sans-serif; letter-spacing: -1px; }
+.admin-welcome p { margin: 0; color: #8f7882; font-size: 13px; }
+.admin-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 0; }
+.admin-panel { overflow: hidden; border: 1px solid #eadde2; border-radius: 12px; background: #fff; box-shadow: 0 5px 20px #57293a08; }
+.admin-panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 15px; padding: 19px 21px; border-bottom: 1px solid #f0e5e9; }
+.admin-panel-heading h2 { margin: 0 0 4px; color: #452536; font: 700 16px Manrope, sans-serif; }
+.admin-panel-heading p { margin: 0; color: #937d86; font-size: 12px; }
+.admin-panel-heading > span { color: #8b707b; font-size: 11px; white-space: nowrap; }
+.admin-table { min-width: 650px; }
+.admin-role, .member-role { display: inline-flex; padding: 5px 8px; border-radius: 7px; font-size: 10px; font-weight: 600; white-space: nowrap; }
+.admin-role { background: #f8e9ee; color: #923a5c; }
+.member-role { background: #f3eff1; color: #796a72; }
+.admin-loading, .admin-privacy-note { color: #8e7882; font-size: 12px; }
+.admin-privacy-note { margin: -5px 0 0; line-height: 1.6; }
 
 @media (max-width: 760px) {
   .auth-card { padding: 30px 25px; }
   .auth-brand { margin-bottom: 32px; }
   .signout-button { display: none; }
   .top-signout-button { display: inline-flex; align-items: center; }
+  .admin-page { gap: 15px; }
+  .admin-welcome h1 { font-size: 24px; }
+  .admin-panel-heading { align-items: flex-start; padding: 16px; }
 }
