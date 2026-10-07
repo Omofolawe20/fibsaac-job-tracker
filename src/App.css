@@ -183,6 +183,7 @@ td { height: 62px; padding: 0 14px; font-size: 12px; }
 .form-error, .api-error { font-size: 12px; }
 
 @media (max-width: 1050px) {
+  .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .topbar { padding: 0 28px; }
   .page-wrap { padding: 34px 28px 20px; }
 }
