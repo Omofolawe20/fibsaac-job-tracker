@@ -34,6 +34,7 @@ function App() {
   const [formError, setFormError] = useState('')
   const [apiError, setApiError] = useState('')
   const [isLoading, setIsLoading] = useState(true)
+  const [isSaving, setIsSaving] = useState(false)
   const [form, setForm] = useState({ company: '', role: '', location: '', date: todayAsLocalDate(), status: 'Applied' })
 
   useEffect(() => {
@@ -86,10 +87,12 @@ function App() {
 
   async function addApplication(event) {
     event.preventDefault()
+    if (isSaving) return
     if (!form.company.trim() || !form.role.trim() || !form.date) {
       setFormError('Add a company, role, and application date to continue.')
       return
     }
+    setIsSaving(true)
     try {
       const isEditing = editingId !== null
       const response = await fetch(`${API_URL}/applications${isEditing ? `/${editingId}` : ''}`, {
@@ -110,6 +113,8 @@ function App() {
       if (!isEditing) setActiveFilter('All applications')
     } catch (error) {
       setFormError(error.message || 'Could not save the application. Please try again.')
+    } finally {
+      setIsSaving(false)
     }
   }
 
@@ -130,6 +135,8 @@ function App() {
   }
 
   async function removeApplication(id) {
+    const application = applications.find((item) => item.id === id)
+    if (!application || !window.confirm(`Delete the application for ${application.company}? This cannot be undone.`)) return
     try {
       const response = await fetch(`${API_URL}/applications/${id}`, { method: 'DELETE' })
       if (!response.ok) throw new Error(await getErrorMessage(response))
@@ -153,8 +160,8 @@ function App() {
           <a className="nav-link" href="#applications"><span className="nav-icon">▤</span> Applications <span className="nav-count">{applications.length}</span></a>
         </nav>
         <div className="sidebar-bottom">
-          <div className="tip-card"><span className="tip-spark">✳</span><strong>Small steps add up.</strong><p>Keep your applications organized and your next opportunity in sight.</p></div>
-          <div className="profile"><div className="avatar">F</div><div><strong>FIbsaac</strong><span>Personal workspace</span></div><span className="profile-dots">···</span></div>
+          <div className="tip-card"><span className="tip-spark">✳</span><strong>One step at a time</strong><p>Your applications, all in one place.</p></div>
+          <div className="profile"><div className="avatar">F</div><div><strong>FIbsaac</strong><span>Personal workspace</span></div></div>
         </div>
       </aside>
 
@@ -162,7 +169,7 @@ function App() {
         <header className="topbar"><div className="breadcrumbs">Workspace <span>/</span> <strong>Overview</strong></div><div className="topbar-right"><span className="today-label">{new Intl.DateTimeFormat('en', { weekday: 'long', month: 'long', day: 'numeric' }).format(new Date())}</span><div className="top-avatar">F</div></div></header>
         <div className="page-wrap">
           <section className="welcome-row">
-            <div><div className="eyebrow"><span className="eyebrow-dot" /> YOUR CAREER, IN FOCUS</div><h1>Good morning, FIbsaac<span className="wave">✳</span></h1><p className="welcome-copy">A clear view of where you are and what’s next.</p></div>
+            <div><div className="eyebrow"><span className="eyebrow-dot" /> YOUR JOB SEARCH</div><h1>Welcome back, FIbsaac</h1><p className="welcome-copy">Here’s where things stand with your applications.</p></div>
             <button className="primary-button" onClick={openNewForm}><span className="plus">+</span> Add application</button>
           </section>
 
@@ -174,20 +181,20 @@ function App() {
           </section>
 
           <section className="applications-panel" id="applications">
-            <div className="panel-heading"><div><h2>Your applications</h2><p>Keep every opportunity moving forward.</p></div><button className="more-button" aria-label="More application options">···</button></div>
+            <div className="panel-heading"><div><h2>Your applications</h2><p>Keep your opportunities and next steps together.</p></div><span className="application-count">{applications.length} total</span></div>
             {apiError && <div className="api-error" role="alert">{apiError}</div>}
             <div className="toolbar"><div className="filter-tabs" role="tablist" aria-label="Filter applications">{filters.map((filter) => <button key={filter} className={`filter-tab ${activeFilter === filter ? 'active' : ''}`} onClick={() => setActiveFilter(filter)} role="tab" aria-selected={activeFilter === filter}>{filter}{filter === 'All applications' && <span className="filter-total">{applications.length}</span>}</button>)}</div><label className="search-box"><span aria-hidden="true">⌕</span><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search applications" aria-label="Search applications" /></label></div>
-            <div className="table-scroll"><table><thead><tr><th>COMPANY</th><th>ROLE</th><th>LOCATION</th><th>DATE APPLIED</th><th>STATUS</th><th><span className="sr-only">Actions</span></th></tr></thead><tbody>{visibleApplications.map((application) => <tr key={application.id}><td><div className="company-cell"><span className="company-logo green">{application.company.slice(0, 1)}</span><strong>{application.company}</strong></div></td><td className="role-cell">{application.role}</td><td className="location-cell">{application.location || 'Not specified'}</td><td className="date-cell">{formatDate(application.date)}</td><td><select className={`status-pill status-select ${application.status.toLowerCase()}`} aria-label={`Status for ${application.company}`} value={application.status} onChange={(event) => updateApplicationStatus(application.id, event.target.value)}>{filters.slice(1).map((status) => <option key={status}>{status}</option>)}</select></td><td><div className="row-actions"><button className="row-action" aria-label={`Edit ${application.company}`} onClick={() => openEditForm(application)}>✎</button><button className="row-action remove-action" aria-label={`Remove ${application.company}`} onClick={() => removeApplication(application.id)}>×</button></div></td></tr>)}</tbody></table>
+            <div className="table-scroll"><table><thead><tr><th>COMPANY</th><th>ROLE</th><th>LOCATION</th><th>DATE APPLIED</th><th>STATUS</th><th><span className="sr-only">Actions</span></th></tr></thead><tbody>{visibleApplications.map((application) => <tr key={application.id}><td><div className="company-cell"><span className="company-logo green">{application.company.slice(0, 1)}</span><strong>{application.company}</strong></div></td><td className="role-cell">{application.role}</td><td className="location-cell">{application.location || 'Not specified'}</td><td className="date-cell">{formatDate(application.date)}</td><td><select className={`status-pill status-select ${application.status.toLowerCase()}`} aria-label={`Change status for ${application.company}`} value={application.status} onChange={(event) => updateApplicationStatus(application.id, event.target.value)}>{filters.slice(1).map((status) => <option key={status}>{status}</option>)}</select></td><td><div className="row-actions"><button className="row-action" onClick={() => openEditForm(application)}>Edit</button><button className="row-action remove-action" onClick={() => removeApplication(application.id)}>Delete</button></div></td></tr>)}</tbody></table>
               {isLoading && <div className="empty-state"><strong>Loading applications…</strong></div>}
               {!isLoading && visibleApplications.length === 0 && <div className="empty-state"><span>⌕</span><strong>{applications.length === 0 ? 'No applications yet' : 'No applications found'}</strong><p>{applications.length === 0 ? 'Add your first opportunity to get started.' : 'Try another search or choose a different status.'}</p>{applications.length === 0 && <button className="empty-add-button" onClick={openNewForm}>Add an application</button>}</div>}
             </div>
             <div className="panel-footer"><span>Showing <strong>{visibleApplications.length}</strong> of <strong>{applications.length}</strong> applications</span><span className="footer-note"><span className="footer-dot" /> Up to date</span></div>
           </section>
-          <footer className="page-footer"><span>Made for the next opportunity.</span><span>FIbsaac’s Job Tracker <span className="footer-version">• 2026</span></span></footer>
+          <footer className="page-footer"><span>A little progress counts.</span><span>FIbsaac’s Job Tracker <span className="footer-version">• 2026</span></span></footer>
         </div>
       </main>
 
-      {showForm && <div className="modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) { setShowForm(false); setEditingId(null) } }}><section className="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div className="modal-heading"><div><span className="modal-kicker">{editingId ? 'UPDATE OPPORTUNITY' : 'NEW OPPORTUNITY'}</span><h2 id="modal-title">{editingId ? 'Edit application' : 'Add an application'}</h2><p>{editingId ? 'Update the details for this opportunity.' : 'Save the details so you can keep track.'}</p></div><button className="close-button" onClick={() => { setShowForm(false); setEditingId(null) }} aria-label="Close form">×</button></div><form onSubmit={addApplication}><label>Company name<input name="company" value={form.company} onChange={updateForm} placeholder="e.g. Acme Inc." autoFocus /></label><label>Job title<input name="role" value={form.role} onChange={updateForm} placeholder="e.g. Product Designer" /></label><div className="form-row"><label>Location <span className="optional">Optional</span><input name="location" value={form.location} onChange={updateForm} placeholder="Remote or city" /></label><label>Date applied<input name="date" type="date" value={form.date} onChange={updateForm} /></label></div><label>Status<select name="status" value={form.status} onChange={updateForm}><option>Applied</option><option>Interview</option><option>Saved</option><option>Offer</option><option>Rejected</option></select></label>{formError && <p className="form-error" role="alert">{formError}</p>}<div className="modal-actions"><button type="button" className="secondary-button" onClick={() => { setShowForm(false); setEditingId(null) }}>Cancel</button><button type="submit" className="primary-button">{editingId ? 'Save changes' : 'Save application'}</button></div></form></section></div>}
+      {showForm && <div className="modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget && !isSaving) { setShowForm(false); setEditingId(null) } }}><section className="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div className="modal-heading"><div><span className="modal-kicker">{editingId ? 'UPDATE OPPORTUNITY' : 'NEW OPPORTUNITY'}</span><h2 id="modal-title">{editingId ? 'Edit application' : 'Add an application'}</h2><p>{editingId ? 'Update the details for this opportunity.' : 'Add a few details to keep it organized.'}</p></div><button type="button" className="close-button" onClick={() => { setShowForm(false); setEditingId(null) }} aria-label="Close form" disabled={isSaving}>×</button></div><form onSubmit={addApplication}><label>Company name<input name="company" value={form.company} onChange={updateForm} placeholder="e.g. Acme Inc." autoFocus required /></label><label>Job title<input name="role" value={form.role} onChange={updateForm} placeholder="e.g. Product Designer" required /></label><div className="form-row"><label>Location <span className="optional">Optional</span><input name="location" value={form.location} onChange={updateForm} placeholder="Remote or city" /></label><label>Date applied<input name="date" type="date" value={form.date} onChange={updateForm} required /></label></div><label>Status<select name="status" value={form.status} onChange={updateForm}><option>Applied</option><option>Interview</option><option>Saved</option><option>Offer</option><option>Rejected</option></select></label>{formError && <p className="form-error" role="alert">{formError}</p>}<div className="modal-actions"><button type="button" className="secondary-button" onClick={() => { setShowForm(false); setEditingId(null) }} disabled={isSaving}>Cancel</button><button type="submit" className="primary-button" disabled={isSaving}>{isSaving ? 'Saving…' : editingId ? 'Save changes' : 'Save application'}</button></div></form></section></div>}
     </div>
   )
 }
