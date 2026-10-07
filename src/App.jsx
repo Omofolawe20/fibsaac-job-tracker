@@ -62,10 +62,10 @@ function AuthScreen({ onAuthenticated, message }) {
     <main className="auth-page">
       <section className="auth-card" aria-labelledby="auth-title">
         <a className="auth-brand" href="#login" aria-label="FIbsaac Job Tracker">
-          <span className="brand-mark">F</span><span>FIbsaac<span className="brand-light">/track</span></span>
+          <span className="brand-mark">F</span><span className="auth-brand-name">FIbsaac</span>
         </a>
         <span className="auth-kicker">YOUR JOB SEARCH, IN ONE PLACE</span>
-        <h1 id="auth-title">{mode === 'signup' ? 'Create your account' : 'Welcome back'}</h1>
+        <h1 id="auth-title">{mode === 'signup' ? 'Create your account' : <>Welcome back, <span className="auth-highlight">FIbsaac</span></>}</h1>
         <p className="auth-intro">{mode === 'signup' ? 'Sign up to save and organize your applications.' : 'Sign in to continue tracking your opportunities.'}</p>
         <form className="auth-form" onSubmit={submit}>
           <label>Email address<input type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" required maxLength={254} /></label>
